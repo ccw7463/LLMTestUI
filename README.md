@@ -16,6 +16,4 @@ This LLM Testing UI includes belows
 
 ## Snapshots
 1. Main Page
-```markdown
-![기능 1 이미지](./public/main.png)
-```
+![main](public/main.png)
