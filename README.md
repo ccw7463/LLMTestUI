@@ -14,10 +14,8 @@ This LLM Testing UI includes belows
 2. Multi-Turn
 3. Select Hyper-parameter (temperature, top-p, ... etc)
 
-## Demo Video
+## Snapshots
+1. Main Page
+```markdown
+  ![기능 1 이미지](./public/main.png)
 
-Below is a demonstration of the process for selecting and testing LLM models in the UI. You can watch the video below:
-
-<video src="./public/demo-video.mp4" controls="controls" style="max-width: 100%;">
-  Your browser does not support the video tag. Please click [here](./videos/demo-video.mp4) to view the video.
-</video>
