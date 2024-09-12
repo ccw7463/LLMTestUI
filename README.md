@@ -8,6 +8,12 @@ The UI is configured to test the following models:
 2. **Meta-Llama/Meta-Llama-3.1-8B-Instruct**: Meta's 8B instruct model, designed for high performance on a variety of NLP tasks.
 3. **Google/Gemma-2-9B-IT**: Google's 9B parameter model, Gemma-2, specialized for instruction tasks in Italian (IT) but capable of multilingual performance.
 
+## Features
+This LLM Testing UI includes belows
+1. Single-Turn
+2. Multi-Turn
+3. Select Hyper-parameter (temperature, top-p, ... etc)
+
 ## Demo Video
 
 Below is a demonstration of the process for selecting and testing LLM models in the UI. You can watch the video below:
