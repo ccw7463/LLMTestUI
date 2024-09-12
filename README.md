@@ -1,5 +1,4 @@
-# 📌 with Chainlit
-# LLM Testing UI
+# 🚀 LLM Testing UI with Chainlit
 
 This project is a UI developed for testing and comparing the performance of multiple large language models (LLMs). 
 The interface is designed to support evaluation of different models' outputs using **Chainlit** as the backend for generating model responses.
