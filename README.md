@@ -13,7 +13,8 @@ The UI is configured to test the following models:
 This LLM Testing UI includes belows
 1. Single-Turn
 2. Multi-Turn
-3. Select Hyper-parameter (temperature, top-p, ... etc)
+3. Select Model
+4. Select Hyper-parameter (temperature, top-p, ... etc)
 
 ## Snapshots
 #### 1. Main Page
