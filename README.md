@@ -7,3 +7,11 @@ The UI is configured to test the following models:
 1. **Qwen/Qwen2-7B-Instruct**: A versatile instruct model optimized for natural language tasks.
 2. **Meta-Llama/Meta-Llama-3.1-8B-Instruct**: Meta's 8B instruct model, designed for high performance on a variety of NLP tasks.
 3. **Google/Gemma-2-9B-IT**: Google's 9B parameter model, Gemma-2, specialized for instruction tasks in Italian (IT) but capable of multilingual performance.
+
+## Demo Video
+
+Below is a demonstration of the process for selecting and testing LLM models in the UI. You can watch the video below:
+
+<video src="./public/demo-video.mp4" controls="controls" style="max-width: 100%;">
+  Your browser does not support the video tag. Please click [here](./videos/demo-video.mp4) to view the video.
+</video>
