@@ -15,5 +15,11 @@ This LLM Testing UI includes belows
 3. Select Hyper-parameter (temperature, top-p, ... etc)
 
 ## Snapshots
-1. Main Page
+#### 1. Main Page
 ![main](public/main.png)
+#### 2. Settings
+![main](public/settings.png)
+#### 3. Single Turn
+![main](public/single.png)
+#### 4. Multi Turn
+![main](public/multi.png)
