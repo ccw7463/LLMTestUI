@@ -92,7 +92,7 @@ async def main(message: cl.Message):
     SETTING_OBJ.LLM = ChatHuggingFace(
         llm=HuggingFaceEndpoint(
             endpoint_url=ModelConfigFactory.get_config(SETTING_OBJ.SETTINGS['use_model']).ENDPOINT,
-            huggingfacehub_api_token="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",
+            huggingfacehub_api_token=os.getenv('HUGGINGFACE_TOKEN'),
             max_new_tokens=SETTING_OBJ.SETTINGS["max_new_tokens"],
             top_k=SETTING_OBJ.SETTINGS["top_k"],
             top_p=SETTING_OBJ.SETTINGS["top_p"],
