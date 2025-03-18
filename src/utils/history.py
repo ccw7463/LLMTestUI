@@ -1,9 +1,9 @@
 from . import *
 
 class ConversationHistory():
-    def __init__(self, SESSION_ID):
-        self.REDIS_CLIENT = redis.StrictRedis.from_url(URLConfig.REDIS_URL)
-        self.SESSION_ID = SESSION_ID
+    def __init__(self, session_id):
+        self.redis_client = redis.StrictRedis.from_url(URLConfig.REDIS_URL)
+        self.session_id = session_id
             
     def add_chat(self, message_dict):
         '''
@@ -13,14 +13,14 @@ class ConversationHistory():
 
         '''
         print("message_dict :",message_dict)
-        key = f"session:{self.SESSION_ID}:chats"
+        key = f"session:{self.session_id}:chats"
         message_json = json.dumps(message_dict, ensure_ascii=False)
-        list_length = self.REDIS_CLIENT.llen(key)
+        list_length = self.redis_client.llen(key)
         if list_length < 3:
-            self.REDIS_CLIENT.rpush(key, message_json)
+            self.redis_client.rpush(key, message_json)
         else:
-            self.REDIS_CLIENT.lpop(key)  # Delete left first element in list 
-            self.REDIS_CLIENT.rpush(key, message_json)  # Add new element to right
+            self.redis_client.lpop(key)  # Delete left first element in list 
+            self.redis_client.rpush(key, message_json)  # Add new element to right
             
     def get_chats(self)->List[Dict]:
         '''
@@ -31,8 +31,8 @@ class ConversationHistory():
             Returns:
                 chat : A list of previously stored STATE (Dict type), including conversations, queries, etc.
         '''
-        key = f"session:{self.SESSION_ID}:chats"
-        chats = self.REDIS_CLIENT.lrange(key, 0, -1) 
+        key = f"session:{self.session_id}:chats"
+        chats = self.redis_client.lrange(key, 0, -1) 
         chats = [json.loads(chat.decode('utf-8')) for chat in chats]
         return chats
 
@@ -41,23 +41,23 @@ class ConversationHistory():
             Des:
                 Delete conversation based on the user session number
         '''        
-        key = f"session:{self.SESSION_ID}:chats"
-        self.REDIS_CLIENT.delete(key)
+        key = f"session:{self.session_id}:chats"
+        self.redis_client.delete(key)
         
     def get_history_chats(self)->Optional[List[Dict[str,str]]]:
         '''
             Des: 
                 Retrieve the conversation of a specific session and convert it to a multi-turn format (user, assistant)
         '''        
-        PREVIOUS_CHATS = self.get_chats()
-        print("PREVIOUS_CHATS :",PREVIOUS_CHATS)
-        if PREVIOUS_CHATS:
-            self.CHATS = []
-            for chat in PREVIOUS_CHATS:
-                self.CHATS.extend([{"role":"user","content":chat['user']},
+        previous_chats = self.get_chats()
+        print("previous_chats :",previous_chats)
+        if previous_chats:
+            self.chats = []
+            for chat in previous_chats:
+                self.chats.extend([{"role":"user","content":chat['user']},
                                    {"role":"assistant","content":chat['assistant']}])
         else:
-            self.CHATS = []
+            self.chats = []
     
     def get_histotry_format_prompt(self):
         '''
@@ -66,12 +66,12 @@ class ConversationHistory():
             Returns:
                 chat : list of langchain_core.messages format
         '''        
-        self.HISTORY = [SystemMessage(content=SYSTEM_PROMPT)]
-        if self.CHATS:
-            for chat in self.CHATS:
+        self.history = [SystemMessage(content=system_prompt)]
+        if self.chats:
+            for chat in self.chats:
                 if chat['role'] == "user":
-                    self.HISTORY.append(HumanMessage(content=chat['content']))
+                    self.history.append(HumanMessage(content=chat['content']))
                 else:
-                    self.HISTORY.append(AIMessage(content=chat['content']))
+                    self.history.append(AIMessage(content=chat['content']))
                     
                     

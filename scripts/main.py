@@ -3,9 +3,9 @@ import os
 import uuid
 from dotenv import load_dotenv
 from transformers import AutoTokenizer
-from langchain.llms.huggingface_endpoint import HuggingFaceEndpoint
-from langchain_community.chat_models.huggingface import ChatHuggingFace
-from src.configs.prompt import *
+from langchain_huggingface import HuggingFaceEndpoint
+from langchain_huggingface import ChatHuggingFace
+from src.configs.prompt import prompt_generate
 from src.configs.config import ModelConfig, ModelConfigFactory
 from src.modules.chainlit import *
 from chainlit.input_widget import Slider, Select
@@ -32,32 +32,31 @@ async def start_chat():
         Des:
             Initialization function
     '''    
-    global CONV_OBJ
-    logger.info(ModelConfig.MODEL_LST)
-    SESSION_ID = uuid.uuid4().hex 
-    CONV_OBJ = ConversationHistory(SESSION_ID) 
-    SETTING_OBJ = SessionSettings()
-    SETTING_OBJ.SETTINGS = await cl.ChatSettings(
+    global conv_obj
+    session_id = uuid.uuid4().hex 
+    conv_obj = ConversationHistory(session_id) 
+    setting_obj = SessionSettings()
+    setting_obj.settings = await cl.ChatSettings(
         [
-            Slider(id="temperature",label="temperature",initial=0.1,
+            Slider(id="temperature",label="temperature",initial=0.5,
                     min=0,max=1,step=0.1),
             Slider(id="top_k",label="top_k",initial=100,
                     min=0,max=200,step=10),
-            Slider(id="top_p",label="top_p",initial=0.9,
+            Slider(id="top_p",label="top_p",initial=0.7,
                     min=0,max=1,step=0.1),
-            Slider(id="max_new_tokens",label="Max Length",initial=4096,
+            Slider(id="max_new_tokens",label="Max Length",initial=2048,
                     min=0,max=8192,step=128),
             Slider(id="repetition_penalty",label="Repetiton Penalty",initial=1.03,
                     min=1,max=2,step=0.01),
             Select(id="use_model",
                    label="Select Model",
-                   values=ModelConfig.MODEL_LST,
+                   values=ModelConfig.model_lst,
                    initial_index=0)
         ],
     ).send()
-    
+    logger.info(f"setting_obj.settings : {setting_obj.settings}")
     # save variables
-    cl.user_session.set("SETTING_OBJ",SETTING_OBJ)
+    cl.user_session.set("setting_obj",setting_obj)
     
 
 @cl.on_message  
@@ -68,16 +67,16 @@ async def main(message: cl.Message):
         Args:
             chat message you did send
     '''
-    global CONV_OBJ
+    global conv_obj
     
     # load variables
-    SETTING_OBJ = cl.user_session.get("SETTING_OBJ")
+    setting_obj = cl.user_session.get("setting_obj")
     
     # Set Message
-    SETTING_OBJ.MESSAGE = message.content
+    setting_obj.message = message.content
     
     # load Tokenizer and set stop sequences
-    tokenizer = AutoTokenizer.from_pretrained(SETTING_OBJ.SETTINGS['use_model'],use_auth_token=os.getenv('HUGGINGFACE_TOKEN'))
+    tokenizer = AutoTokenizer.from_pretrained(setting_obj.settings['use_model'],use_auth_token=os.getenv('HUGGINGFACE_TOKEN'))
     stop_sequences = []
     if tokenizer.additional_special_tokens:
         for stop_seq in tokenizer.additional_special_tokens:
@@ -90,76 +89,79 @@ async def main(message: cl.Message):
             final_stop_sequences.append(item)
     
     # set model
-    SETTING_OBJ.LLM = ChatHuggingFace(
+    setting_obj.llm = ChatHuggingFace(
         llm=HuggingFaceEndpoint(
-            endpoint_url=ModelConfigFactory.get_config(SETTING_OBJ.SETTINGS['use_model']).ENDPOINT,
+            endpoint_url=ModelConfigFactory.get_config(setting_obj.settings['use_model']).ENDPOINT,
             huggingfacehub_api_token=os.getenv('HUGGINGFACE_TOKEN'),
-            max_new_tokens=SETTING_OBJ.SETTINGS["max_new_tokens"],
-            top_k=SETTING_OBJ.SETTINGS["top_k"],
-            top_p=SETTING_OBJ.SETTINGS["top_p"],
-            temperature=SETTING_OBJ.SETTINGS["temperature"],
-            repetition_penalty=SETTING_OBJ.SETTINGS["repetition_penalty"],
+            max_new_tokens=setting_obj.settings["max_new_tokens"],
+            top_k=setting_obj.settings["top_k"],
+            top_p=setting_obj.settings["top_p"],
+            temperature=setting_obj.settings["temperature"],
+            repetition_penalty=setting_obj.settings["repetition_penalty"],
             model_kwargs={},
             stop_sequences=final_stop_sequences
             ),
-        model_id=SETTING_OBJ.SETTINGS["use_model"]
-    )
+        model_id=setting_obj.settings["use_model"],
+        stream_mode=True
+    ).bind(max_tokens=setting_obj.settings["max_new_tokens"])
     
     # save variables
-    cl.user_session.set("SETTING_OBJ",SETTING_OBJ)
+    cl.user_session.set("setting_obj",setting_obj)
     
     # run
     await init()
     await general_answer()
     
 async def init():
-    
-    global CONV_OBJ
+    global conv_obj
     
     # load variables
-    SETTING_OBJ = cl.user_session.get("SETTING_OBJ")
+    setting_obj = cl.user_session.get("setting_obj")
     
     # regenerate input message with history
-    CONV_OBJ.get_history_chats()
-    CONV_OBJ.get_histotry_format_prompt()
-    SETTING_OBJ.STATE = {"CURRENT":{"MESSAGE":SETTING_OBJ.MESSAGE},
-                         "HISTORY":CONV_OBJ.HISTORY}
+    conv_obj.get_history_chats()
+    conv_obj.get_histotry_format_prompt()
+    setting_obj.state = {"current":{"message":setting_obj.message},
+                         "history":conv_obj.history}
     
     # save variables
-    cl.user_session.set("SETTING_OBJ",SETTING_OBJ)
+    cl.user_session.set("setting_obj",setting_obj)
     
 async def general_answer():
     '''
         Des:
             Generate Answer
     '''
-    global CONV_OBJ
+    global conv_obj
     
     # load variables
-    SETTING_OBJ = cl.user_session.get("SETTING_OBJ")
+    setting_obj = cl.user_session.get("setting_obj")
         
+    # set chain
+    Chain__generate = prompt_generate|setting_obj.llm
+    
     # generate answer
     msg = cl.Message(content='')
-    Chain__generate = prompt_generate|SETTING_OBJ.LLM
-    SETTING_OBJ.ANSWER = ""
+    setting_obj.answer = ""
     try:
-        async for chunk in Chain__generate.astream(SETTING_OBJ.STATE):
+        async for chunk in Chain__generate.astream(setting_obj.state):
+            logger.info(f"chunk.content : {chunk.content}")
             await msg.stream_token(chunk.content)
-            SETTING_OBJ.ANSWER += chunk.content
+            setting_obj.answer += chunk.content
     except Exception as e: 
         if str(e) == "System role not supported": # in case gemma
-            SETTING_OBJ.STATE['HISTORY'] = SETTING_OBJ.STATE['HISTORY'][1:]
-            async for chunk in Chain__generate.astream(SETTING_OBJ.STATE): # ignore system 
+            setting_obj.state['history'] = setting_obj.state['history'][1:]
+            async for chunk in Chain__generate.astream(setting_obj.state):
                 await msg.stream_token(chunk.content)
-                SETTING_OBJ.ANSWER += chunk.content
-    CONV_OBJ.add_chat({"user":SETTING_OBJ.MESSAGE,
-                       "assistant":SETTING_OBJ.ANSWER})
+                setting_obj.answer += chunk.content
+    conv_obj.add_chat({"user":setting_obj.message,
+                       "assistant":setting_obj.answer})
     
     # save variables
-    cl.user_session.set("SETTING_OBJ",SETTING_OBJ)
+    cl.user_session.set("setting_obj",setting_obj)
 
 @cl.on_chat_end
 def end():
-    global CONV_OBJ
+    global conv_obj
     print("goodbye", cl.user_session.get("id"))
-    CONV_OBJ.delete_chats()
+    conv_obj.delete_chats()
