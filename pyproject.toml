@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "llmtestui"
+version = "0.1.0"
+description = ""
+authors = ["ccw7463 <ccw7463@example.com>"]
+readme = "README.md"
+
+# 포함할 패키지 지정
+packages = [
+    { include = "log" },
+    { include = "scripts" },
+    { include = "src" },
+    { include = "configs", from = "src" },
+    { include = "modules", from = "src" },
+    { include = "utils", from = "src" },
+    { include = "unittests" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+chainlit = "^2.4.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

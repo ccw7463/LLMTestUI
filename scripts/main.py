@@ -1,20 +1,21 @@
-import sys
-sys.path = [path for path in sys.path if not path.startswith('/workspace')]
-sys.path.append("/workspace/changwoo/LLMTestUI")
 
-from configs.prompt import *
-from configs.config import *
-from modules.chainlit import *
-from chainlit.input_widget import Slider, Switch, Select
-from utils.history import ConversationHistory
-from transformers import AutoConfig, AutoTokenizer
+import os
+import uuid
+from dotenv import load_dotenv
+from transformers import AutoTokenizer
 from langchain.llms.huggingface_endpoint import HuggingFaceEndpoint
 from langchain_community.chat_models.huggingface import ChatHuggingFace
-import uuid
-from loguru import logger
-from dotenv import load_dotenv
-import os
+from src.configs.prompt import *
+from src.configs.config import ModelConfig, ModelConfigFactory
+from src.modules.chainlit import *
+from chainlit.input_widget import Slider, Select
+from src.utils.history import ConversationHistory
+from src.utils.logger import setup_logger
+from pathlib import Path
+
 load_dotenv()  # Load variables from .env file
+
+logger = setup_logger(script_name=Path(__file__).stem)
 
 class SessionSettings():
     '''
